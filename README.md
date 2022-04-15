@@ -4,6 +4,7 @@ Trabalho final da disciplina de Estruturas de Dados I, feito em colaboração co
 # Dependência
 
 + GSL
+
 Usamos a interface de geração de números pseudo-aleatórios da [GSL](https://www.gnu.org/software/gsl/) para dar conta das chamadas ao elevador sorteando andares e número de passageiros.
 
 # Mudanças
