@@ -6,31 +6,52 @@
 #include "fila_enc.h"
 
 int main() {
-    Elevador *elevador;
     FilaEnc *sobe, *desce;
 
     sobe = criaFila();
     desce = criaFila();
-    elevador = criaElevador();
+    int numElevadores = 2;
+    Elevador **elevador = (Elevador**)malloc(numElevadores*sizeof(Elevador));
 
-    /***** Chamadas de teste do elevador ******/
-    enfileiraFila(elevador->destino, 2, 10);
-    enfileiraFila(elevador->destino, 3, 10);
-    enfileiraFila(elevador->destino, 6, 10);
-    enfileiraFila(elevador->destino, 5, 10);
-    enfileiraFila(elevador->destino, 9, 10);
-    enfileiraFila(elevador->destino, 7, 10);
-    /******************************************/
-
-    while(!vaziaFila(elevador->destino)) {
-        exibeElevador(elevador);
-        move_elevador(elevador);
-        getchar();
+    //inicia elevador
+    for (int i = 0; i < numElevadores; i++) {
+        elevador[i] = criaElevador();
+        //enfileiraFila(elevador[i]->destino, 0, 0);
+        elevador[i]->id = i+1;
     }
-    exibeElevador(elevador);
+
+    //enfileiraFila(sobe, 1, 0);
+    enfileiraFila(sobe, 2, 0);
+    //enfileiraFila(sobe, 1, 0);
+    //enfileiraFila(sobe, 5, 0);
+    //enfileiraFila(sobe, 6, 0);
+    //enfileiraFila(desce, 2, 0);
+    //enfileiraFila(desce, 3, 0);
+    //enfileiraFila(desce, 6, 0);
+    //enfileiraFila(desce, 7, 0);
+
+    /*Elevador *maisProx;
+    NodoLEnc *aux = sobe->ini;
+    while(aux != NULL) {
+        maisProx = elevadorMaisProx(elevador, numElevadores, aux->andar, 1);
+        printf("Elevador mais prox de %d: #%d\n", aux->andar, maisProx->id);
+        enfileiraFilaCrescente(maisProx->destino, aux->andar, aux->num_passageiros);
+        aux = aux->prox;
+    }*/
+    gerenciaChamadas(sobe, desce, elevador, numElevadores);
+    puts("");
+    for (int i = 0; i < numElevadores; i++) {
+        exibeElevador(elevador[i]);
+    }
+
+
+
 
     destroiFila(sobe);
     destroiFila(desce);
-    destroiElevador(elevador);
+
+    // destroi elevador
+    for (int i = 0; i < numElevadores; i++)
+        destroiElevador(elevador[i]);
     return 0;
 }
