@@ -34,31 +34,49 @@ void enfileiraFila(FilaEnc *fila, int andar, int num_passageiros){
    fila->fim = novo;
 }
 
-int enfileiraFilaOrdenado(FilaEnc *fila, int andar, int num_passageiros) {
+void enfileiraFilaCrescente(FilaEnc *fila, int andar, int num_passageiros) {
+    if (vaziaFila(fila))
+        enfileiraFila(fila, andar, num_passageiros);
+        else {
+            NodoLEnc *novo = (NodoLEnc*)malloc(sizeof(NodoLEnc));
+            novo->andar = andar;
+            novo->num_passageiros = num_passageiros;
+            if (fila->ini->andar > andar) {
+                NodoLEnc *aux = fila->ini;
+                fila->ini = novo;
+                novo->prox = aux;
+            } else if (fila->fim->andar < andar) {
+                fila->fim->prox = novo;
+                fila->fim = novo;
+                novo->prox = NULL;
+            } else {
+                NodoLEnc *aux = fila->ini;
+                while (aux->prox->andar < andar)
+                    aux = aux->prox;
+                novo->prox = aux->prox;
+                aux->prox = novo;
+            }
+        }
+}
+
+void enfileiraFilaDecrescente(FilaEnc *fila, int andar, int num_passageiros) {
     if (vaziaFila(fila))
         enfileiraFila(fila, andar, num_passageiros);
     else {
-        NodoLEnc *aux = fila->ini;
         NodoLEnc *novo = (NodoLEnc*)malloc(sizeof(NodoLEnc));
         novo->andar = andar;
-        if (aux->prox == NULL) {
-            if (aux->andar < andar)
-                enfileiraFila(fila, andar, num_passageiros);
-            else {
-                fila->ini = novo;
-                novo->prox = fila->fim;
-            }
-        } else if (fila->ini->andar > andar) {
-            novo->prox = fila->ini;
+        novo->num_passageiros = num_passageiros;
+        if (fila->ini->andar < andar) {
+            NodoLEnc *aux = fila->ini;
             fila->ini = novo;
+            novo->prox = aux;
+        } else if (andar < fila->fim->andar) {
+            fila->fim->prox = novo;
+            fila->fim = novo;
         } else {
-            while (aux->prox->andar < andar) {
-                if (aux->prox == fila->fim) {
-                    enfileiraFila(fila, andar, num_passageiros);
-                    return 1;
-                }
+            NodoLEnc *aux = fila->ini;
+            while (aux->prox->andar > andar)
                 aux = aux->prox;
-            }
             novo->prox = aux->prox;
             aux->prox = novo;
         }
@@ -89,6 +107,43 @@ NodoLEnc* exibeNodoEnc(NodoLEnc *raiz) {
 }
 
 void exibeFila(FilaEnc *fila) {
-    exibeNodoEnc(fila->ini);
+    if (vaziaFila(fila))
+        printf("Fila vazia.");
+    else
+        exibeNodoEnc(fila->ini);
     printf("\n");
+}
+
+NodoLEnc *buscaNodo (FilaEnc *fila, int andar) {
+    NodoLEnc *aux = fila->ini;
+    while (aux != NULL) {
+        if (aux->andar == andar)
+            return aux;
+        aux = aux->prox;
+    }
+    return NULL;
+}
+
+NodoLEnc *copiaNodos (NodoLEnc *nodo) {
+    if (nodo == NULL)
+        return NULL;
+    NodoLEnc *copia = (NodoLEnc*)malloc(sizeof(NodoLEnc));
+    copia->andar = nodo->andar;
+    copia->num_passageiros = nodo->num_passageiros;
+    copia->prox = copiaNodos(nodo->prox);
+    return copia;
+}
+
+FilaEnc *copiaFila(FilaEnc *fila) {
+    if (fila == NULL)
+        return NULL;
+    FilaEnc *copia = criaFila();
+    if(!vaziaFila(fila)) {
+        copia->ini = copiaNodos(fila->ini);
+        NodoLEnc *aux = copia->ini;
+        while(aux->prox != NULL)
+            aux = aux->prox;
+        copia->fim = aux;
+    }
+    return copia;
 }

@@ -1,36 +1,104 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
-#include <gsl/gsl_rng.h>
+#include <string.h>
+#include <unistd.h>
 #include "elevador.h"
 #include "fila_enc.h"
 
+
+Elevador** criaElevadores (int numElevadores);
+void destroiElevadores (Elevador** elevador, int numElevadores);
+
 int main() {
-    Elevador *elevador;
+    int op;
+    int numElevadores = 1;
+    int numAndares = 15;
     FilaEnc *sobe, *desce;
+    Elevador **elevador = NULL;
 
     sobe = criaFila();
     desce = criaFila();
-    elevador = criaElevador();
 
-    /***** Chamadas de teste do elevador ******/
-    enfileiraFila(elevador->destino, 2, 10);
-    enfileiraFila(elevador->destino, 3, 10);
-    enfileiraFila(elevador->destino, 6, 10);
-    enfileiraFila(elevador->destino, 5, 10);
-    enfileiraFila(elevador->destino, 9, 10);
-    enfileiraFila(elevador->destino, 7, 10);
-    /******************************************/
+    srand(time(NULL));
 
-    while(!vaziaFila(elevador->destino)) {
-        exibeElevador(elevador);
-        move_elevador(elevador);
-        getchar();
+    do {
+        printf("=============== ELEVATOR MANAGER ===============\n");
+        printf("1. Configurar variaveis: \n");
+        printf("2. Iniciar Simulacao: \n");
+        printf("3. Sair\n");
+        printf("Opcao: ");
+        scanf(" %d", &op);
+
+        switch (op) {
+            case 1: {
+                if (elevador != NULL)
+                    for (int i = 0; i < numElevadores; i++)
+                        destroiElevador(elevador[i]);
+                printf("Numero de elevadores: " ); scanf(" %d", &numElevadores);
+                printf("Numero de andares: "); scanf(" %d", &numAndares);
+                elevador = (Elevador**)malloc(numElevadores*sizeof(Elevador));
+
+                //inicia elevadores
+                for (int i = 0; i < numElevadores; i++) {
+                    elevador[i] = criaElevador();
+                    elevador[i]->id = i+1;
+                }
+                geraChamadas(sobe, numAndares, 2);
+                geraChamadas(desce, numAndares, 2);
+                break;
+            }
+
+            case 2: {
+                int turno = 0;
+                printf("\nIniciando Simulacao...\n\n");
+                printf("Chamadas: \n");
+                printf("Sobe:  "); exibeFila(sobe);
+                printf("Desce: "); exibeFila(desce);
+                gerenciaChamadas(sobe, desce, elevador, numElevadores);
+
+                do {
+                    printf("\nTurno: %d\n", turno++);
+                    gerenciaChamadas(sobe, desce, elevador, numElevadores);
+                    for (int i = 0; i < numElevadores; i++) {
+                        exibeElevador(elevador[i]);
+                        move_elevador(elevador[i]);
+                    }
+                    printf("Chamadas: \n");
+                    printf("Sobe:  "); exibeFila(sobe);
+                    printf("Desce: "); exibeFila(desce);
+                    scanf(" %c", &op);
+                } while (op == '\n');
+                break;
+            }
+            case 3: {
+                destroiFila(sobe);
+                destroiFila(desce);
+
+                // destroi elevador
+                for (int i = 0; i < numElevadores; i++)
+                    destroiElevador(elevador[i]);
+                printf("Saindo...\n");
+                break;
+            }
+            default:
+                printf("Opcao invalida.\n");
+        }
+        puts("");
+    } while (op != 3);
+}
+
+
+Elevador** criaElevadores (int numElevadores) {
+    Elevador **elevador = (Elevador**)malloc(numElevadores*sizeof(Elevador));
+    for (int i = 0; i < numElevadores; i++) {
+        elevador[i] = criaElevador();
+        elevador[i]->id = i+1;
     }
-    exibeElevador(elevador);
+    return elevador;
+}
 
-    destroiFila(sobe);
-    destroiFila(desce);
-    destroiElevador(elevador);
-    return 0;
+void destroiElevadores (Elevador** elevador, int numElevadores) {
+    for (int i = 0; i < numElevadores; i++)
+        destroiElevador(elevador[i]);
 }
