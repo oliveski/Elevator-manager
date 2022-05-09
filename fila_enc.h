@@ -41,4 +41,7 @@ void exibeFila(FilaEnc *fila);
 
 // Função que busca nodo; retorna o endereço do nodo, se ele existir na fila, returna NULL caso contrário
 NodoLEnc *buscaNodo (FilaEnc *fila, int andar);
+
+FilaEnc *copiaFila(FilaEnc *fila);
+
 #endif

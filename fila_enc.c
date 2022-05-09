@@ -40,6 +40,7 @@ void enfileiraFilaCrescente(FilaEnc *fila, int andar, int num_passageiros) {
         else {
             NodoLEnc *novo = (NodoLEnc*)malloc(sizeof(NodoLEnc));
             novo->andar = andar;
+            novo->num_passageiros = num_passageiros;
             if (fila->ini->andar > andar) {
                 NodoLEnc *aux = fila->ini;
                 fila->ini = novo;
@@ -64,6 +65,7 @@ void enfileiraFilaDecrescente(FilaEnc *fila, int andar, int num_passageiros) {
     else {
         NodoLEnc *novo = (NodoLEnc*)malloc(sizeof(NodoLEnc));
         novo->andar = andar;
+        novo->num_passageiros = num_passageiros;
         if (fila->ini->andar < andar) {
             NodoLEnc *aux = fila->ini;
             fila->ini = novo;
@@ -78,20 +80,6 @@ void enfileiraFilaDecrescente(FilaEnc *fila, int andar, int num_passageiros) {
             novo->prox = aux->prox;
             aux->prox = novo;
         }
-    }
-}
-
-// Função que insere um nodo no fim da fila
-void enfileiraFilaFinal(FilaEnc *fila, int andar, int num_passageiros) {
-    if (vaziaFila(fila))
-        enfileiraFila(fila, andar, num_passageiros);
-    else {
-        NodoLEnc *novo = (NodoLEnc*)malloc(sizeof(NodoLEnc));
-        novo->andar = andar;
-        novo->num_passageiros = num_passageiros;
-        novo->prox = NULL;
-        fila->fim->prox = novo;
-        fila->fim = novo;
     }
 }
 
@@ -119,7 +107,10 @@ NodoLEnc* exibeNodoEnc(NodoLEnc *raiz) {
 }
 
 void exibeFila(FilaEnc *fila) {
-    exibeNodoEnc(fila->ini);
+    if (vaziaFila(fila))
+        printf("Fila vazia.");
+    else
+        exibeNodoEnc(fila->ini);
     printf("\n");
 }
 
@@ -131,4 +122,28 @@ NodoLEnc *buscaNodo (FilaEnc *fila, int andar) {
         aux = aux->prox;
     }
     return NULL;
+}
+
+NodoLEnc *copiaNodos (NodoLEnc *nodo) {
+    if (nodo == NULL)
+        return NULL;
+    NodoLEnc *copia = (NodoLEnc*)malloc(sizeof(NodoLEnc));
+    copia->andar = nodo->andar;
+    copia->num_passageiros = nodo->num_passageiros;
+    copia->prox = copiaNodos(nodo->prox);
+    return copia;
+}
+
+FilaEnc *copiaFila(FilaEnc *fila) {
+    if (fila == NULL)
+        return NULL;
+    FilaEnc *copia = criaFila();
+    if(!vaziaFila(fila)) {
+        copia->ini = copiaNodos(fila->ini);
+        NodoLEnc *aux = copia->ini;
+        while(aux->prox != NULL)
+            aux = aux->prox;
+        copia->fim = aux;
+    }
+    return copia;
 }

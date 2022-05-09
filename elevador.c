@@ -1,7 +1,7 @@
 #include "elevador.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <limits.h>
 #include <math.h>
 
 // Função que cria elevador;
@@ -28,9 +28,6 @@ void exibeElevador(Elevador *elevador) {
         printf("Numero de Passageiros: %d\n", elevador->num_passageiros);
         printf("Fila: ");
         exibeFila(elevador->destino);
-        if (elevador->estado == 0)
-            printf("Embarque\\Desenbarque de pessoas\nPor favor, espere...\n");
-        printf("\n");
     } else
         printf("Elevador indisponivel.\n");
 }
@@ -46,7 +43,21 @@ void move_elevador (Elevador *elevador) {
             elevador->andar_atual--;	// desco um andar
         } else {
             elevador->estado = 0;	// to aqui ja
-            desenfileiraFila(elevador->destino);  // galera desce
+            desenfileiraFila(elevador->destino);
+        }
+    }
+}
+
+void atualizaElevador (Elevador *elevador) {
+    if (!vaziaFila(elevador->destino)) {
+        int destino = elevador->destino->ini->andar;
+        int andar_atual = elevador->andar_atual;
+        int num_passageiros = elevador->destino->ini->num_passageiros;
+
+        if (destino == andar_atual) {
+            printf("Embarque\\Desembarque...\n");
+            elevador->num_passageiros += num_passageiros;
+            //desenfileiraFila(elevador->destino);
         }
     }
 }
@@ -56,197 +67,136 @@ void destroiElevador (Elevador *elevador) {
     free(elevador);
 }
 
-
-int tempoAtenderChamada (Elevador *elevador, int andar, int direcao)
-{
+int tempoAteAndar (Elevador *elevador, int andar) {
+    if (elevador == NULL)
+        return -1;
     int tempo = 0;
-
-    switch (elevador->estado) {
-        case 0: {
-            if (vaziaFila(elevador->destino)) {
-                if (elevador->andar_atual < andar) {
-                    for (int i = elevador->andar_atual; i <= andar; i++)
-                        tempo += tempoMovendo;
-                    return tempo;
-                } else if (elevador->andar_atual > andar) {
-                    for (int i = elevador->andar_atual <= andar; i >= andar; i--) {
-                        tempo += tempoMovendo;
-                    }
-                    return tempo;
-                } else
-                    return 0;
-            }
-            else {
-                if (elevador->andar_atual < elevador->destino->fim->andar) {
-                    for (int i = elevador->andar_atual; i <= elevador->destino->fim->andar; i++) {
-                        if (buscaNodo(elevador->destino, i) != NULL)
-                            tempo += tempoParado;
-                        else
-                            tempo += tempoMovendo;
-                        }
-                } else if (elevador->andar_atual > elevador->destino->fim->andar) {
-                    for (int i = elevador->andar_atual; i >= elevador->destino->fim->andar; i--) {
-                        if (buscaNodo(elevador->destino, i) != NULL)
-                            tempo += tempoParado;
-                        else
-                            tempo += tempoMovendo;
-                        }
-                    }
-                return tempo;
-            }
-        }
-        case 1: {
-            if (elevador->andar_atual < andar) {
-                for (int i = elevador->andar_atual; i <= andar; i++) {
-                    if (buscaNodo(elevador->destino, i) != NULL)
-                        tempo += tempoParado;
-                    else
-                        tempo += tempoMovendo;
-                }
-                return tempo;
-            } else if (elevador->andar_atual > andar) {
-                for (int i = elevador->andar_atual; i >= elevador->destino->fim->andar; i--) {
-                    if (buscaNodo(elevador->destino, i) != NULL)
-                        tempo += tempoParado;
-                    else
-                        tempo += tempoMovendo;
-                    }
-                return tempo;
-            } else
-                return 0;
-        }
-        case 2: {
-            if (elevador->andar_atual < andar) {
-                for (int i = elevador->andar_atual; i >= elevador->destino->fim->andar; i--) {
-                    if (buscaNodo(elevador->destino, i) != NULL)
-                        tempo += tempoParado;
-                    else
-                        tempo += tempoMovendo;
-                }
-                return tempo;
-            } else if (elevador->andar_atual > andar) {
-                for (int i = elevador->andar_atual; i <= andar; i++) {
-                    if (buscaNodo(elevador->destino, i) != NULL)
-                        tempo += tempoParado;
-                    else
-                        tempo += tempoMovendo;
-                }
-                return tempo;
-            } else
-                return 0;
-        }
+    Elevador *aux = copiaElevador(elevador);
+    enfileiraFila(aux->destino, andar, 0);
+    while (!vaziaFila(aux->destino)) {
+        //printf("Turno: %d\tAndar: %d\n", tempo,  aux->andar_atual);
+        if (aux->andar_atual == andar)
+            break;
+        move_elevador(aux);
+        tempo++;
     }
+    destroiElevador(aux);
+    //printf("TT: %d\n", tempo);
+    return tempo;
 }
 
-Elevador *elevadorMaisProx(Elevador **elevador, int numElevadores, int andar, int direcao) {
-    Elevador *maisProx = elevador[0];
-    int menorTempo = tempoAtenderChamada(elevador[0], andar, direcao);
-    //puts("done");
-    for (int i = 1; i < numElevadores; i++) {
-        if (tempoAtenderChamada(elevador[i], andar, direcao) < menorTempo) {
-            maisProx = elevador[i];
-            menorTempo = tempoAtenderChamada(elevador[i], andar, direcao);
+Elevador *elevadorMaisProx (Elevador **elevador, int numElevadores, int andar, int direcao) {
+    int menorTempo = INT_MAX;
+    Elevador *maisProx = NULL;
+
+    for (int i = 0; i < numElevadores; i++) {
+        if (elevador[i]->estado == 0 && vaziaFila(elevador[i]->destino)) {
+            if (tempoAteAndar(elevador[i], andar) < menorTempo) {
+                menorTempo = tempoAteAndar(elevador[i], andar);
+                maisProx = elevador[i];
+            }
+        } else if (direcao == 1) {
+            if (elevador[i]->andar_atual <= andar) {
+                if (elevador[i]->estado == 0) {
+                    if (proximoPassoElevador(elevador[i]) == 1) {
+                        if (tempoAteAndar(elevador[i], andar) < menorTempo) {
+                            menorTempo = tempoAteAndar(elevador[i], andar);
+                            maisProx = elevador[i];
+                        }
+                    }
+                } else if (elevador[i]->estado == 1) {
+                    if (tempoAteAndar(elevador[i], andar) < menorTempo) {
+                        menorTempo = tempoAteAndar(elevador[i], andar);
+                        maisProx = elevador[i];
+                    }
+                }
+            }
+        } else if (direcao == 2) {
+            if (elevador[i]->andar_atual >= andar) {
+                if (elevador[i]->estado == 0) {
+                    if (proximoPassoElevador(elevador[i]) == 2) {
+                        if (tempoAteAndar(elevador[i], andar) < menorTempo) {
+                            menorTempo = tempoAteAndar(elevador[i], andar);
+                            maisProx = elevador[i];
+                        }
+                    }
+                } else if (elevador[i]->estado == 2) {
+                    if (tempoAteAndar(elevador[i], andar) < menorTempo) {
+                        menorTempo = tempoAteAndar(elevador[i], andar);
+                        maisProx = elevador[i];
+                    }
+                }
+            }
         }
+        //printf("Menor tempo: %d\n", menorTempo);
     }
     return maisProx;
 }
 
 void gerenciaChamadas (FilaEnc *sobe, FilaEnc *desce, Elevador **elevador, int numElevadores) {
-    NodoLEnc *aux;
-    while (!vaziaFila(sobe)) {
-        aux = sobe->ini;
+    FilaEnc *espera = criaFila();
+    NodoLEnc *aux = sobe->ini;
+    while (aux != NULL) {
         Elevador *maisProx = elevadorMaisProx(elevador, numElevadores, aux->andar, 1);
-
-        switch (maisProx->estado) {
-            case 0: {
-                if (vaziaFila(maisProx->destino))
-                    enfileiraFila(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                else if (maisProx->andar_atual < maisProx->destino->ini->andar) // Elevador vai subir
-                    enfileiraFilaCrescente(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                else if (maisProx->andar_atual > maisProx->destino->ini->andar) // Elevador vai descer
-                    enfileiraFilaDecrescente(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                break;
-            }
-
-            case 1: {
-                if (vaziaFila(maisProx->destino))
-                    enfileiraFila(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                else if (aux->andar < maisProx->andar_atual)
-                    enfileiraFilaFinal(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                else if (aux->andar > maisProx->andar_atual)
-                    enfileiraFilaCrescente(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                break;
-            }
-
-            case 2: {
-                if (vaziaFila(maisProx->destino))
-                    enfileiraFila(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                else if (aux->andar < maisProx->andar_atual)
-                    enfileiraFilaDecrescente(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                else if (aux->andar > maisProx->andar_atual)
-                    enfileiraFilaFinal(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                break;
-            }
+        if (maisProx != NULL) {
+            enfileiraFilaCrescente(maisProx->destino, aux->andar, aux->num_passageiros);
+        } else {
+            enfileiraFila(espera, aux->andar, aux->num_passageiros);
         }
-    //    puts("teste");
+        aux = aux->prox;
         desenfileiraFila(sobe);
     }
-
-    while (!vaziaFila(desce)) {
-        aux = desce->ini;
-
+    destroiFila(sobe);
+    sobe = copiaFila(espera);
+    while (!vaziaFila(espera)) // Esvazia espera
+        desenfileiraFila(espera);
+    //printf("Sobe:  "); exibeFila(sobe);
+    //printf("Desce: "); exibeFila(desce);
+    aux = desce->ini;
+    while (aux != NULL) {
         Elevador *maisProx = elevadorMaisProx(elevador, numElevadores, aux->andar, 2);
-
-        switch (maisProx->estado) {
-            case 0: {
-                if (vaziaFila(maisProx->destino))
-                    enfileiraFila(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                else if (maisProx->andar_atual < maisProx->destino->ini->andar) // Elevador vai subir
-                    enfileiraFilaCrescente(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                else if (maisProx->andar_atual > maisProx->destino->ini->andar) // Elevador vai descer
-                    enfileiraFilaDecrescente(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                break;
-            }
-
-            case 1: {
-                if (vaziaFila(maisProx->destino))
-                    enfileiraFila(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                else if (aux->andar < maisProx->andar_atual)
-                    enfileiraFilaFinal(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                else if (aux->andar > maisProx->andar_atual)
-                    enfileiraFilaCrescente(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                break;
-            }
-
-            case 2: {
-                if (vaziaFila(maisProx->destino))
-                    enfileiraFila(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                else if (aux->andar < maisProx->andar_atual)
-                    enfileiraFilaDecrescente(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                else if (aux->andar > maisProx->andar_atual)
-                    enfileiraFilaFinal(maisProx->destino, aux->andar, aux->num_passageiros);
-
-                break;
-            }
+        if (maisProx != NULL) {
+            enfileiraFilaDecrescente(maisProx->destino, aux->andar, aux->num_passageiros);
+        } else {
+            enfileiraFila(espera, aux->andar, aux->num_passageiros);
         }
-
+        aux = aux->prox;
         desenfileiraFila(desce);
     }
+    destroiFila(desce);
+    desce = copiaFila(espera);
+    //printf("Sobe:  "); exibeFila(sobe);
+    //printf("Desce: "); exibeFila(desce);
+    destroiFila(espera);
+}
+
+int proximoPassoElevador (Elevador *elevador) {
+    if (vaziaFila(elevador->destino) || elevador->andar_atual == elevador->destino->ini->andar)
+        return 0;
+    else if (elevador->andar_atual < elevador->destino->ini->andar)
+        return 1;
+    else if (elevador->andar_atual > elevador->destino->ini->andar)
+        return 2;
+}
+
+Elevador *copiaElevador (Elevador *elevador) {
+    Elevador *aux = criaElevador();
+    aux->id = elevador->id;
+    aux->estado = elevador->estado;
+    aux->andar_atual = elevador->andar_atual;
+    aux->num_passageiros = elevador->num_passageiros;
+    aux->destino = copiaFila(elevador->destino);
+    return aux;
+}
+
+int elevadorMovendo (Elevador **elevador, int numElevadores) {
+    for (int i = 0; i < numElevadores; i++)
+        if (elevador[i]->estado || !vaziaFila(elevador[i]->destino))
+            return 1;
+    return 0;
+}
+
+void geraChamadas (FilaEnc *fila, int numAndares, int numChamadas) {
+    for (int i = 0; i < numChamadas; i++)
+        enfileiraFila(fila, rand()%numAndares + 1, rand()%MAX_PASSAGEIROS + 1);
 }
