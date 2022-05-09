@@ -14,6 +14,23 @@ Elevador *criaElevador () {
     return elevador;
 }
 
+// Funcao que cria um vetor de elevadores
+Elevador** criaElevadores (int numElevadores) {
+    Elevador **elevador = (Elevador**)malloc(numElevadores*sizeof(Elevador));
+    for (int i = 0; i < numElevadores; i++) {
+        elevador[i] = criaElevador();
+        elevador[i]->id = i+1;
+    }
+    return elevador;
+}
+
+// Funcao que libera o vetor de elevadores
+void destroiElevadores (Elevador** elevador, int numElevadores) {
+    for (int i = 0; i < numElevadores; i++)
+        destroiElevador(elevador[i]);
+    free(elevador);
+}
+
 void exibeElevador(Elevador *elevador) {
     if (elevador != NULL) {
         printf("Elevador #%d\n", elevador->id);
@@ -32,7 +49,7 @@ void exibeElevador(Elevador *elevador) {
         printf("Elevador indisponivel.\n");
 }
 
-
+// Funcao que faz o elevador se mover 1 andar se tiver destino
 void move_elevador (Elevador *elevador) {
     if (!vaziaFila(elevador->destino)) {
         if (elevador->andar_atual < elevador->destino->ini->andar) {
@@ -42,12 +59,13 @@ void move_elevador (Elevador *elevador) {
             elevador->estado = 2;	// elevador desce
             elevador->andar_atual--;	// desco um andar
         } else {
-            elevador->estado = 0;	// to aqui ja
+            elevador->estado = 0;	// elevador no andar de destino
             desenfileiraFila(elevador->destino);
         }
     }
 }
 
+// Funcao que atualiza o numero de pessoas no elevador ao chegar em um destino
 void atualizaElevador (Elevador *elevador) {
     if (!vaziaFila(elevador->destino)) {
         int destino = elevador->destino->ini->andar;
@@ -67,6 +85,7 @@ void destroiElevador (Elevador *elevador) {
     free(elevador);
 }
 
+// Funcao que determina quantos passos sao necessarios para um elevador chegar a um andar
 int tempoAteAndar (Elevador *elevador, int andar) {
     if (elevador == NULL)
         return -1;
@@ -85,6 +104,8 @@ int tempoAteAndar (Elevador *elevador, int andar) {
     return tempo;
 }
 
+// Funcao que retorna o elevador mais proximo de um andar e que esteja
+// se movendo em uma dada direcao
 Elevador *elevadorMaisProx (Elevador **elevador, int numElevadores, int andar, int direcao) {
     int menorTempo = INT_MAX;
     Elevador *maisProx = NULL;
@@ -170,6 +191,7 @@ void gerenciaChamadas (FilaEnc *sobe, FilaEnc *desce, Elevador **elevador, int n
     destroiFila(espera);
 }
 
+// Funcao que diz se um elevador vai ficar parado, subir ou descer em seguida
 int proximoPassoElevador (Elevador *elevador) {
     if (vaziaFila(elevador->destino) || elevador->andar_atual == elevador->destino->ini->andar)
         return 0;
@@ -196,6 +218,7 @@ int elevadorMovendo (Elevador **elevador, int numElevadores) {
     return 0;
 }
 
+// Funcao que gera chamadas aleatorias para elevadores
 void geraChamadas (FilaEnc *fila, int numAndares, int numChamadas) {
     for (int i = 0; i < numChamadas; i++)
         enfileiraFila(fila, rand()%numAndares + 1, rand()%MAX_PASSAGEIROS + 1);

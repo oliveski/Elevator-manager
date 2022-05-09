@@ -1,3 +1,8 @@
+// Lucas Caique Nogueira
+// Leonardo Lambiase
+// João Vitor Mesquita
+// Estruturas de dados I
+// Maio de 2022
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -31,7 +36,7 @@ int main() {
         scanf(" %d", &op);
 
         switch (op) {
-            case 1: {
+            case 1:
                 if (elevador != NULL)
                     for (int i = 0; i < numElevadores; i++)
                         destroiElevador(elevador[i]);
@@ -47,9 +52,8 @@ int main() {
                 geraChamadas(sobe, numAndares, 2);
                 geraChamadas(desce, numAndares, 2);
                 break;
-            }
 
-            case 2: {
+            case 2:
                 int turno = 0;
                 printf("\nIniciando Simulacao...\n\n");
                 printf("Chamadas: \n");
@@ -70,38 +74,23 @@ int main() {
                     scanf(" %c", &op);
                 } while (op == '\n');
                 break;
-            }
-            case 3: {
+            case 3:
+		// liberamos as filas
                 destroiFila(sobe);
                 destroiFila(desce);
 
+                // libera elevador
 		if(elevador != NULL){
-                // destroi elevador
-                for (int i = 0; i < numElevadores; i++)
-                    destroiElevador(elevador[i]);
-		free(elevador);
+			destroiElevadores(elevador, numElevadores);
 		}
                 printf("Saindo...\n");
                 break;
-            }
             default:
                 printf("Opcao invalida.\n");
         }
         puts("");
     } while (op != 3);
-}
 
+    return 0;
 
-Elevador** criaElevadores (int numElevadores) {
-    Elevador **elevador = (Elevador**)malloc(numElevadores*sizeof(Elevador));
-    for (int i = 0; i < numElevadores; i++) {
-        elevador[i] = criaElevador();
-        elevador[i]->id = i+1;
-    }
-    return elevador;
-}
-
-void destroiElevadores (Elevador** elevador, int numElevadores) {
-    for (int i = 0; i < numElevadores; i++)
-        destroiElevador(elevador[i]);
 }
