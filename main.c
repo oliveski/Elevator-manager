@@ -75,9 +75,12 @@ int main() {
                 destroiFila(sobe);
                 destroiFila(desce);
 
+		if(elevador != NULL){
                 // destroi elevador
                 for (int i = 0; i < numElevadores; i++)
                     destroiElevador(elevador[i]);
+		free(elevador);
+		}
                 printf("Saindo...\n");
                 break;
             }
